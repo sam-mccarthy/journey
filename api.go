@@ -1,12 +1,13 @@
-package journey
+package main
 
 import (
 	"database/sql"
 	"errors"
-	"github.com/alexedwards/argon2id"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/alexedwards/argon2id"
+	"github.com/gin-gonic/gin"
 )
 
 type Credentials struct {
@@ -23,9 +24,9 @@ type User struct {
 }
 
 type Entry struct {
-	Username string    `json:"username"`
-	Date     time.Time `json:"date"`
-	Content  string    `json:"content"`
+	UserID  int       `json:"username"`
+	Date    time.Time `json:"date"`
+	Content string    `json:"content"`
 }
 
 func RegisterUser(ctx *gin.Context, db *sql.DB) {
@@ -93,6 +94,7 @@ func LoginUser(ctx *gin.Context, db *sql.DB) {
 }
 
 func GetUser(ctx *gin.Context, db *sql.DB) {
+
 }
 
 func GetJournals(ctx *gin.Context, db *sql.DB) {

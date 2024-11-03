@@ -1,4 +1,4 @@
-package journey
+package main
 
 import (
 	"database/sql"
@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("sqlite", ":memory:")
-	if err != nil {
-		log.Fatal(err)
+	db, sql_err := sql.Open("sqlite", ":memory:")
+	if sql_err != nil {
+		log.Fatal(sql_err)
 	}
 
 	defer func(db *sql.DB) {
