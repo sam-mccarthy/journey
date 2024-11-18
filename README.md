@@ -4,7 +4,7 @@ Journey is intended to be a daily journaling app built to be open-source, primar
 
 ## TO-DO
 - ~~Run through and comment code~~
-- Sketch out database structure
+- ~~Sketch out database structure~~
 - Implement session keys
 - Begin building React frontend
 
