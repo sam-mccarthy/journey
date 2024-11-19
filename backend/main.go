@@ -5,12 +5,13 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/glebarez/go-sqlite"
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
 )
 
 func main() {
 	// Open a SQLite database. For now, we'll keep it in memory
-	db, sql_err := sql.Open("sqlite", ":memory:")
+	db, sql_err := sql.Open("sqlite3", ":memory:")
 	if sql_err != nil {
 		log.Fatal(sql_err)
 	}
