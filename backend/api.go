@@ -58,7 +58,7 @@ func RegisterUser(ctx *gin.Context, db *sql.DB) {
 	}
 
 	// Insert the new user data into the table.
-	_, err = db.Exec("INSERT INTO users (username, hash) VALUES (?, ?)", user.Username, hash)
+	_, err = db.Exec("INSERT INTO credentials (username, hash) VALUES (?, ?)", user.Username, hash)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return
@@ -78,7 +78,7 @@ func LoginUser(ctx *gin.Context, db *sql.DB) {
 	}
 
 	// Query the user's username and hash from the table.
-	row := db.QueryRow("SELECT username, hash FROM users WHERE username = ?", user.Username)
+	row := db.QueryRow("SELECT username, hash FROM credentials WHERE username = ?", user.Username)
 
 	// Retrieve the username and hash.
 	var username string

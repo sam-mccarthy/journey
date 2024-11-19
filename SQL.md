@@ -1,13 +1,18 @@
 # SQL table structure outline
 
-For now, we only need three tables - one storing users, one storing user entries, and one for storing session data.
+For now, we need four tables - one storing users, one storing credentials, one storing user entries, and one for storing session data.
 
-We'll use the following SQL schema for now.
+We'll use the following SQL schema.
 ```sql
 CREATE TABLE IF NOT EXISTS Users (
   Username TEXT PRIMARY KEY,
   JoinUnix INTEGER NOT NULL,
   EntryCount INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Credentials (
+  Username TEXT PRIMARY KEY,
+  Hash TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Entries (

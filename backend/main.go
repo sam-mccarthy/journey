@@ -19,8 +19,18 @@ func main() {
 	// There's gotta be a cleaner way to do this.
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Users (
 		  Username TEXT PRIMARY KEY,
+		  Hash TEXT NOT NULL,
 		  JoinUnix INTEGER NOT NULL,
 		  EntryCount INTEGER NOT NULL
+		)`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Credentials (
+		  Username TEXT PRIMARY KEY,
+		  Hash TEXT NOT NULL
 		)`)
 
 	if err != nil {
