@@ -4,22 +4,22 @@ For now, we only need three tables - one storing users, one storing user entries
 
 We'll use the following SQL schema for now.
 ```sql
-CREATE TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
   Username TEXT PRIMARY KEY,
-  JoinUnix INTEGER,
-  EntryCount INTEGER
+  JoinUnix INTEGER NOT NULL,
+  EntryCount INTEGER NOT NULL
 );
 
-CREATE TABLE Entries (
+CREATE TABLE IF NOT EXISTS Entries (
   EntryID INTEGER PRIMARY KEY AUTOINCREMENT,
-  EntryUnix INTEGER,
-  Username TEXT,
-  Content TEXT
+  EntryUnix INTEGER NOT NULL,
+  Username TEXT NOT NULL,
+  Content TEXT NOT NULL
 );
 
-CREATE TABLE Sessions (
-  Username TEXT,
-  SessionKey TEXT,
-  SessionUnix INTEGER
+CREATE TABLE IF NOT EXISTS Sessions (
+  Username TEXT NOT NULL,
+  SessionKey TEXT NOT NULL,
+  SessionUnix INTEGER NOT NULL
 );
 ```

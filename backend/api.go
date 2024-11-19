@@ -30,6 +30,17 @@ type Entry struct {
 	Content  string    `json:"content"`
 }
 
+// Session - Stores a user's session key
+type Session struct {
+	Username    string    `json:"username"`
+	SessionKey  string    `json:"sessionKey"`
+	SessionUnix time.Time `json:"sessionUnix"`
+}
+
+func GenerateSessionKey(username string) Session {
+	return Session{}
+}
+
 func RegisterUser(ctx *gin.Context, db *sql.DB) {
 	// Attempt to bind the posted JSON into a user struct.
 	// TODO: Sanitize.
@@ -97,12 +108,14 @@ func LoginUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
+	sessionKey := GenerateSessionKey(user.Username)
+
 	// Finally, return the confirmation back to the sender.
-	ctx.JSON(http.StatusOK, gin.H{"username": username})
+	ctx.JSON(http.StatusOK, gin.H{"username": username, "sessionKey": sessionKey})
 }
 
 func GetUser(ctx *gin.Context, db *sql.DB) {
-
+	ctx.JSON(http.StatusOK, gin.H{"guh": "guh"})
 }
 
 func GetJournals(ctx *gin.Context, db *sql.DB) {

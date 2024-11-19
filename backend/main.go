@@ -11,15 +11,45 @@ import (
 
 func main() {
 	// Open a SQLite database. For now, we'll keep it in memory
-	db, sql_err := sql.Open("sqlite3", ":memory:")
-	if sql_err != nil {
-		log.Fatal(sql_err)
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// TODO: Add tables to the database if they don't already exist.
+	// There's gotta be a cleaner way to do this.
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Users (
+		  Username TEXT PRIMARY KEY,
+		  JoinUnix INTEGER NOT NULL,
+		  EntryCount INTEGER NOT NULL
+		)`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Entries (
+		  EntryID INTEGER PRIMARY KEY AUTOINCREMENT,
+		  EntryUnix INTEGER NOT NULL,
+		  Username TEXT NOT NULL,
+		  Content TEXT NOT NULL
+		)`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Sessions (
+		  Username TEXT NOT NULL,
+		  SessionKey TEXT NOT NULL,
+		  SessionUnix INTEGER NOT NULL
+		)`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	defer func(db *sql.DB) {
-		err := db.Close()
+		err = db.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -33,4 +63,9 @@ func main() {
 
 	router.GET("/api/user", func(ctx *gin.Context) { GetUser(ctx, db) })
 	router.GET("/api/journals", func(ctx *gin.Context) { GetJournals(ctx, db) })
+
+	err = router.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
