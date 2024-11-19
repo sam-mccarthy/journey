@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -38,7 +41,20 @@ type Session struct {
 }
 
 func GenerateSessionKey(username string) Session {
-	return Session{}
+	session := Session{
+		Username:    username,
+		SessionUnix: time.Now(),
+	}
+
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		log.Fatal("Problem generating session key")
+		return Session{}
+	}
+
+	session.SessionKey = hex.EncodeToString(bytes)
+
+	return session
 }
 
 func RegisterUser(ctx *gin.Context, db *sql.DB) {
@@ -47,6 +63,17 @@ func RegisterUser(ctx *gin.Context, db *sql.DB) {
 	var user Credentials
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
+		return
+	}
+
+	// TODO: These two should be their own validation functions.
+	if len(user.Username) < 3 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Error": "Username must be at least 3 characters."})
+		return
+	}
+
+	if len(user.Password) < 8 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Error": "Password must be at least 8 characters."})
 		return
 	}
 
@@ -108,16 +135,16 @@ func LoginUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
-	sessionKey := GenerateSessionKey(user.Username)
+	session := GenerateSessionKey(user.Username)
 
 	// Finally, return the confirmation back to the sender.
-	ctx.JSON(http.StatusOK, gin.H{"username": username, "sessionKey": sessionKey})
+	ctx.JSON(http.StatusOK, gin.H{"session": session})
 }
 
 func GetUser(ctx *gin.Context, db *sql.DB) {
-	ctx.JSON(http.StatusOK, gin.H{"guh": "guh"})
+	ctx.JSON(http.StatusOK, gin.H{"Placeholder": "GetUser"})
 }
 
 func GetJournals(ctx *gin.Context, db *sql.DB) {
-
+	ctx.JSON(http.StatusOK, gin.H{"Placeholder": "GetJournals"})
 }
