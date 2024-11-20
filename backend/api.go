@@ -1,61 +1,12 @@
 package main
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
-	"errors"
-	"log"
 	"net/http"
-	"time"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/gin-gonic/gin"
 )
-
-// Credentials - Store user credentials during login and register.
-type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-// User - Store basic user information. Later, more statistics might be nice.
-type User struct {
-	Username   string    `json:"username"`
-	JoinDate   time.Time `json:"joinDate"`
-	EntryCount int       `json:"entryCount"`
-}
-
-// Entry - Store a user's journal entry.
-type Entry struct {
-	Username int       `json:"username"`
-	Date     time.Time `json:"date"`
-	Content  string    `json:"content"`
-}
-
-// Session - Stores a user's session key
-type Session struct {
-	Username    string    `json:"username"`
-	SessionKey  string    `json:"sessionKey"`
-	SessionUnix time.Time `json:"sessionUnix"`
-}
-
-func GenerateSessionKey(username string) Session {
-	session := Session{
-		Username:    username,
-		SessionUnix: time.Now(),
-	}
-
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		log.Fatal("Problem generating session key")
-		return Session{}
-	}
-
-	session.SessionKey = hex.EncodeToString(bytes)
-
-	return session
-}
 
 func RegisterUser(ctx *gin.Context, db *sql.DB) {
 	// Attempt to bind the posted JSON into a user struct.
@@ -84,8 +35,7 @@ func RegisterUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// Insert the new user data into the table.
-	_, err = db.Exec("INSERT INTO credentials (username, hash) VALUES (?, ?)", user.Username, hash)
+	err = AddCredentials(db, user.Username, hash)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return
@@ -97,28 +47,15 @@ func RegisterUser(ctx *gin.Context, db *sql.DB) {
 
 func LoginUser(ctx *gin.Context, db *sql.DB) {
 	// Attempt to bind posted JSON into user struct.
-	// TODO: Sanitize.
 	var user Credentials
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 		return
 	}
 
-	// Query the user's username and hash from the table.
-	row := db.QueryRow("SELECT username, hash FROM credentials WHERE username = ?", user.Username)
-
-	// Retrieve the username and hash.
-	var username string
-	var hash string
-	err := row.Scan(&username, &hash)
-
+	// Query the user's password hash.
+	hash, err := GetPasswordHash(db, user.Username)
 	if err != nil {
-		// If there is an error, and it's a lack of rows, the username is invalid.
-		if errors.Is(err, sql.ErrNoRows) {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"Error": "Invalid username or password"})
-			return
-		}
-
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return
 	}
@@ -135,10 +72,8 @@ func LoginUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
-	session := GenerateSessionKey(user.Username)
-
-	// Finally, return the confirmation back to the sender.
-	ctx.JSON(http.StatusOK, gin.H{"session": session})
+	// Finally, return the session back to the sender.
+	ctx.JSON(http.StatusOK, GenerateSessionKey(db, user.Username))
 }
 
 func GetUser(ctx *gin.Context, db *sql.DB) {
