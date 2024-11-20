@@ -9,4 +9,4 @@ Journey is intended to be a daily journaling app built to be open-source, primar
 - Begin building React frontend
 
 - ~~SQL Exec calls need to be sanitized.~~ This is already done by database/sql.
-- Returning .Error() straight may expose sensitive information, so later on this will need to be mitigated.
+- ~~Returning .Error() straight may expose sensitive information, so later on this will need to be mitigated.~~

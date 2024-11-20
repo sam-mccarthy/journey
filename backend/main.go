@@ -17,7 +17,11 @@ func main() {
 		return
 	}
 
-	initializeDatabase(db)
+	err = initializeDatabase(db)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	defer func(db *sql.DB) {
 		err = db.Close()

@@ -13,7 +13,7 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 	// TODO: Sanitize.
 	var user Credentials
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad request data"})
 		return
 	}
 
@@ -28,13 +28,13 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 	// Create a hash of the POSTed password for storage.
 	hash, err := argon2id.CreateHash(user.Password, argon2id.DefaultParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed processing password"})
 		return
 	}
 
 	err = addCredentials(db, user.Username, hash)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -46,21 +46,21 @@ func loginUser(ctx *gin.Context, db *sql.DB) {
 	// Attempt to bind posted JSON into user struct.
 	var user Credentials
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad request data"})
 		return
 	}
 
 	// Query the user's password hash.
 	hash, err := getPasswordHash(db, user.Username)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed processing password"})
 		return
 	}
 
 	// Check the password against the stored hash.
 	match, _, err := argon2id.CheckHash(user.Password, hash)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed checking password"})
 		return
 	}
 
@@ -71,7 +71,7 @@ func loginUser(ctx *gin.Context, db *sql.DB) {
 
 	session, err := generateSessionKey(db, user.Username)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed generating session"})
 		return
 	}
 

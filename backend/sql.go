@@ -5,9 +5,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	"github.com/gin-gonic/gin"
-	"log"
-	"net/http"
 	"time"
 )
 
@@ -76,11 +73,7 @@ func initializeDatabase(db *sql.DB) error {
 		  SessionUnix INTEGER NOT NULL
 		)`)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func addUser(db *sql.DB, user User) {
@@ -88,14 +81,23 @@ func addUser(db *sql.DB, user User) {
 }
 
 func addCredentials(db *sql.DB, username string, hash string) error {
-	// Insert the new user data into the table.
-	_, err := db.Exec("INSERT INTO credentials (username, hash) VALUES (?, ?)", username, hash)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return err
+	var exists bool
+	row := db.QueryRow("SELECT EXISTS(SELECT 1 FROM credentials) WHERE username = ?", username)
+	err := row.Scan(&exists)
+
+	if err == nil {
+		if exists {
+			return errors.New("user already exists")
+		}
+
+		// Insert the new user data into the table
+		_, err = db.Exec("INSERT INTO credentials (username, hash) VALUES (?, ?)", username, hash)
+		if err == nil {
+			return nil
+		}
 	}
 
-	return nil
+	return errors.New("failed to access data")
 }
 
 func getPasswordHash(db *sql.DB, username string) (string, error) {
@@ -109,7 +111,7 @@ func getPasswordHash(db *sql.DB, username string) (string, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", errors.New("invalid username or password")
 		}
-		return "", err
+		return "", errors.New("failed processing password")
 	}
 
 	return hash, nil
