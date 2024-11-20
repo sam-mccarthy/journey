@@ -17,15 +17,12 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// TODO: These two should be their own validation functions.
-	if len(user.Username) < 3 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "username must be at least 3 characters."})
-		return
+	if !checkUsername(user.Username) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad username"})
 	}
 
-	if len(user.Password) < 8 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "password must be at least 8 characters."})
-		return
+	if !checkPassword(user.Password) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad password"})
 	}
 
 	// Create a hash of the POSTed password for storage.
@@ -88,4 +85,12 @@ func getUser(ctx *gin.Context, db *sql.DB) {
 
 func getJournals(ctx *gin.Context, db *sql.DB) {
 	ctx.JSON(http.StatusOK, gin.H{"placeholder": "getJournals"})
+}
+
+func checkUsername(username string) bool {
+	return len(username) < 3
+}
+
+func checkPassword(password string) bool {
+	return len(password) < 8
 }
