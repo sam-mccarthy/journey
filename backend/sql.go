@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"log"
 	"time"
 )
 
@@ -82,7 +83,7 @@ func addUser(db *sql.DB, user User) {
 
 func addCredentials(db *sql.DB, username string, hash string) error {
 	var exists bool
-	row := db.QueryRow("SELECT EXISTS(SELECT 1 FROM credentials) WHERE username = ?", username)
+	row := db.QueryRow("SELECT EXISTS(SELECT 1 FROM credentials WHERE username = ?)", username)
 	err := row.Scan(&exists)
 
 	if err == nil {
@@ -97,6 +98,7 @@ func addCredentials(db *sql.DB, username string, hash string) error {
 		}
 	}
 
+	log.Println(err.Error())
 	return errors.New("failed to access data")
 }
 

@@ -19,10 +19,12 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 
 	if !checkUsername(user.Username) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad username"})
+		return
 	}
 
 	if !checkPassword(user.Password) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad password"})
+		return
 	}
 
 	// Create a hash of the POSTed password for storage.
@@ -34,7 +36,7 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 
 	err = addCredentials(db, user.Username, hash)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -88,9 +90,9 @@ func getJournals(ctx *gin.Context, db *sql.DB) {
 }
 
 func checkUsername(username string) bool {
-	return len(username) < 3
+	return len(username) >= 3
 }
 
 func checkPassword(password string) bool {
-	return len(password) < 8
+	return len(password) >= 8
 }

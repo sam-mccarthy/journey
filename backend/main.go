@@ -14,13 +14,11 @@ func main() {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
 	err = initializeDatabase(db)
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
 	defer func(db *sql.DB) {
