@@ -17,7 +17,7 @@ func main() {
 		return
 	}
 
-	InitializeDatabase(db)
+	initializeDatabase(db)
 
 	defer func(db *sql.DB) {
 		err = db.Close()
@@ -29,11 +29,11 @@ func main() {
 	// We need to be able to register, login, view the user, and view the user's journals.
 	// Later, we'll also need a POST request available for creating journal posts, among potential others.
 	router := gin.Default()
-	router.POST("/api/register", func(ctx *gin.Context) { RegisterUser(ctx, db) })
-	router.POST("/api/login", func(ctx *gin.Context) { LoginUser(ctx, db) })
+	router.POST("/api/register", func(ctx *gin.Context) { registerUser(ctx, db) })
+	router.POST("/api/login", func(ctx *gin.Context) { loginUser(ctx, db) })
 
-	router.GET("/api/user", func(ctx *gin.Context) { GetUser(ctx, db) })
-	router.GET("/api/journals", func(ctx *gin.Context) { GetJournals(ctx, db) })
+	router.GET("/api/user", func(ctx *gin.Context) { getUser(ctx, db) })
+	router.GET("/api/journals", func(ctx *gin.Context) { getJournals(ctx, db) })
 
 	err = router.Run()
 	if err != nil {

@@ -38,7 +38,7 @@ type Session struct {
 	SessionUnix time.Time `json:"sessionUnix"`
 }
 
-func InitializeDatabase(db *sql.DB) {
+func initializeDatabase(db *sql.DB) error {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS Users (
 		  Username TEXT PRIMARY KEY,
 		  Hash TEXT NOT NULL,
@@ -47,7 +47,7 @@ func InitializeDatabase(db *sql.DB) {
 		)`)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Entries (
@@ -58,7 +58,7 @@ func InitializeDatabase(db *sql.DB) {
 		)`)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Credentials (
@@ -67,7 +67,7 @@ func InitializeDatabase(db *sql.DB) {
 		)`)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS Sessions (
@@ -77,26 +77,28 @@ func InitializeDatabase(db *sql.DB) {
 		)`)
 
 	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func AddUser(db *sql.DB, user User) {
-
-}
-
-func AddCredentials(db *sql.DB, username string, hash string) error {
-	// Insert the new user data into the table.
-	_, err := db.Exec("INSERT INTO credentials (username, hash) VALUES (?, ?)", username, hash)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		return err
 	}
 
 	return nil
 }
 
-func GetPasswordHash(db *sql.DB, username string) (string, error) {
+func addUser(db *sql.DB, user User) {
+
+}
+
+func addCredentials(db *sql.DB, username string, hash string) error {
+	// Insert the new user data into the table.
+	_, err := db.Exec("INSERT INTO credentials (username, hash) VALUES (?, ?)", username, hash)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return err
+	}
+
+	return nil
+}
+
+func getPasswordHash(db *sql.DB, username string) (string, error) {
 	row := db.QueryRow("SELECT username, hash FROM credentials WHERE username = ?", username)
 
 	var sqlUsername string
@@ -113,7 +115,7 @@ func GetPasswordHash(db *sql.DB, username string) (string, error) {
 	return hash, nil
 }
 
-func GenerateSessionKey(db *sql.DB, username string) Session {
+func generateSessionKey(db *sql.DB, username string) (Session, error) {
 	session := Session{
 		Username:    username,
 		SessionUnix: time.Now(),
@@ -121,11 +123,10 @@ func GenerateSessionKey(db *sql.DB, username string) Session {
 
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
-		log.Fatal("Problem generating session key")
-		return Session{}
+		return Session{}, errors.New("problem generating session key")
 	}
 
 	session.SessionKey = hex.EncodeToString(bytes)
 
-	return session
+	return session, nil
 }
