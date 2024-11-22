@@ -17,9 +17,8 @@ type Credentials struct {
 
 // User - Store basic user information. Later, more statistics might be nice.
 type User struct {
-	Username   string    `json:"username"`
-	JoinDate   time.Time `json:"joinDate"`
-	EntryCount int       `json:"entryCount"`
+	Username string    `json:"username"`
+	JoinDate time.Time `json:"joinDate"`
 }
 
 // Entry - Store a user's journal entry.
@@ -39,9 +38,7 @@ type Session struct {
 func initializeDatabase(db *sql.DB) error {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS Users (
 		  Username TEXT PRIMARY KEY,
-		  Hash TEXT NOT NULL,
-		  JoinUnix INTEGER NOT NULL,
-		  EntryCount INTEGER NOT NULL
+		  JoinUnix INTEGER NOT NULL
 		)`)
 
 	if err != nil {
@@ -77,8 +74,55 @@ func initializeDatabase(db *sql.DB) error {
 	return err
 }
 
-func addUser(db *sql.DB, user User) {
+func getUser(db *sql.DB, username string) (User, error) {
+	var user User
 
+	row := db.QueryRow(`SELECT username, joinUnix FROM users WHERE Username = ?`, username)
+	err := row.Scan(&user.Username, &user.JoinDate)
+
+	if err != nil {
+		return User{}, errors.New("failed to get user")
+	}
+
+	return user, nil
+}
+
+func getEntries(db *sql.DB, username string, limit int) ([]Entry, error) {
+	entries := make([]Entry, 0)
+
+	rows, err := db.Query(`SELECT username, date, content FROM Entries WHERE Username = ? LIMIT ?`, username, limit)
+	if err != nil {
+		return nil, errors.new("failed to get entry data")
+	}
+
+	for rows.Next() {
+		entry := Entry{}
+		if err := rows.Scan(&entry.Username, &entry.Date, &entry.Content); err != nil {
+			return nil, errors.New("failed to scan entry")
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+func addUser(db *sql.DB, username string) error {
+	_, err := db.Exec(`INSERT INTO users (username, joinDate) VALUES (?, ?)`, username, time.Now())
+	if err != nil {
+		return errors.New("failed to create user")
+	}
+
+	return nil
+}
+
+func addEntry(db *sql.DB, username string, content string) error {
+	_, err := db.Exec(`INSERT INTO entries (username, date, content) VALUES (?, ?, ?)`, username, time.Now(), content)
+	if err != nil {
+		return errors.New("failed to create user")
+	}
+
+	return nil
 }
 
 func addCredentials(db *sql.DB, username string, hash string) error {
