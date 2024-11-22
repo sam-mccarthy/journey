@@ -71,9 +71,9 @@ func loginUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
-	session, err := generateSessionKey(db, user.Username)
+	session, err := newSession(db, user.Username)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed generating session"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

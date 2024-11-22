@@ -119,7 +119,7 @@ func getPasswordHash(db *sql.DB, username string) (string, error) {
 	return hash, nil
 }
 
-func generateSessionKey(db *sql.DB, username string) (Session, error) {
+func newSession(db *sql.DB, username string) (Session, error) {
 	session := Session{
 		Username:    username,
 		SessionUnix: time.Now(),
@@ -131,6 +131,12 @@ func generateSessionKey(db *sql.DB, username string) (Session, error) {
 	}
 
 	session.SessionKey = hex.EncodeToString(bytes)
+
+	_, err := db.Exec("INSERT INTO sessions (username, sessionKey, sessionUnix) VALUES (?, ?, ?)",
+		session.Username, session.SessionKey, session.SessionUnix)
+	if err != nil {
+		return Session{}, errors.New("failed creating session")
+	}
 
 	return session, nil
 }
