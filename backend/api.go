@@ -8,6 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Credentials - Store user credentials during login and register.
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 func registerUser(ctx *gin.Context, db *sql.DB) {
 	// Attempt to bind the posted JSON into a user struct.
 	// TODO: Sanitize.
@@ -34,7 +40,7 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err = addCredentials(db, user.Username, hash)
+	err = addCredentialData(db, user.Username, hash)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -53,7 +59,7 @@ func loginUser(ctx *gin.Context, db *sql.DB) {
 	}
 
 	// Query the user's password hash.
-	hash, err := getPasswordHash(db, user.Username)
+	hash, err := getPasswordHashData(db, user.Username)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed processing password"})
 		return
@@ -71,7 +77,7 @@ func loginUser(ctx *gin.Context, db *sql.DB) {
 		return
 	}
 
-	session, err := newSession(db, user.Username)
+	session, err := newSessionData(db, user.Username)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -82,11 +88,55 @@ func loginUser(ctx *gin.Context, db *sql.DB) {
 }
 
 func getUser(ctx *gin.Context, db *sql.DB) {
-	ctx.JSON(http.StatusOK, gin.H{"placeholder": "getUser"})
+	data := struct {
+		Username string `json:"username"`
+		Session  string `json:"session"`
+	}{Username: ""}
+
+	if err := ctx.ShouldBindJSON(&data); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad request data"})
+		return
+	}
+
+	if err := checkSessionData(db, data.Username, data.Session); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := getUserData(db, data.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
 }
 
 func getJournals(ctx *gin.Context, db *sql.DB) {
-	ctx.JSON(http.StatusOK, gin.H{"placeholder": "getJournals"})
+	data := struct {
+		Username string `json:"username"`
+		Limit    int    `json:"limit"`
+		Offset   int    `json:"offset"`
+		Session  string `json:"session"`
+	}{}
+
+	if err := ctx.ShouldBindJSON(&data); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad request data"})
+		return
+	}
+
+	if err := checkSessionData(db, data.Username, data.Session); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	entries, err := getEntryData(db, data.Username, data.Limit, data.Offset)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, entries)
 }
 
 func checkUsername(username string) bool {

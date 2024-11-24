@@ -34,8 +34,8 @@ func main() {
 	router.POST("/api/register", func(ctx *gin.Context) { registerUser(ctx, db) })
 	router.POST("/api/login", func(ctx *gin.Context) { loginUser(ctx, db) })
 
-	router.GET("/api/user", func(ctx *gin.Context) { getUser(ctx, db) })
-	router.GET("/api/journals", func(ctx *gin.Context) { getJournals(ctx, db) })
+	router.POST("/api/user", func(ctx *gin.Context) { getUser(ctx, db) })
+	router.POST("/api/journals", func(ctx *gin.Context) { getJournals(ctx, db) })
 
 	err = router.Run()
 	if err != nil {

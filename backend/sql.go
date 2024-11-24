@@ -9,12 +9,6 @@ import (
 	"time"
 )
 
-// Credentials - Store user credentials during login and register.
-type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 // User - Store basic user information. Later, more statistics might be nice.
 type User struct {
 	Username string    `json:"username"`
@@ -74,10 +68,10 @@ func initializeDatabase(db *sql.DB) error {
 	return err
 }
 
-func getUser(db *sql.DB, username string) (User, error) {
+func getUserData(db *sql.DB, username string) (User, error) {
 	var user User
 
-	row := db.QueryRow(`SELECT username, joinUnix FROM users WHERE Username = ?`, username)
+	row := db.QueryRow("SELECT username, joinUnix FROM users WHERE Username = ?", username)
 	err := row.Scan(&user.Username, &user.JoinDate)
 
 	if err != nil {
@@ -87,12 +81,12 @@ func getUser(db *sql.DB, username string) (User, error) {
 	return user, nil
 }
 
-func getEntries(db *sql.DB, username string, limit int) ([]Entry, error) {
+func getEntryData(db *sql.DB, username string, limit int, offset int) ([]Entry, error) {
 	entries := make([]Entry, 0)
 
-	rows, err := db.Query(`SELECT username, date, content FROM Entries WHERE Username = ? LIMIT ?`, username, limit)
+	rows, err := db.Query("SELECT username, date, content FROM Entries WHERE Username = ? LIMIT ? OFFSET ?", username, limit, offset)
 	if err != nil {
-		return nil, errors.new("failed to get entry data")
+		return nil, errors.New("failed to get entry data")
 	}
 
 	for rows.Next() {
@@ -107,8 +101,8 @@ func getEntries(db *sql.DB, username string, limit int) ([]Entry, error) {
 	return entries, nil
 }
 
-func addUser(db *sql.DB, username string) error {
-	_, err := db.Exec(`INSERT INTO users (username, joinDate) VALUES (?, ?)`, username, time.Now())
+func addUserData(db *sql.DB, username string) error {
+	_, err := db.Exec("INSERT INTO users (username, joinDate) VALUES (?, ?)", username, time.Now())
 	if err != nil {
 		return errors.New("failed to create user")
 	}
@@ -116,8 +110,8 @@ func addUser(db *sql.DB, username string) error {
 	return nil
 }
 
-func addEntry(db *sql.DB, username string, content string) error {
-	_, err := db.Exec(`INSERT INTO entries (username, date, content) VALUES (?, ?, ?)`, username, time.Now(), content)
+func addEntryData(db *sql.DB, username string, content string) error {
+	_, err := db.Exec("INSERT INTO entries (username, date, content) VALUES (?, ?, ?)", username, time.Now(), content)
 	if err != nil {
 		return errors.New("failed to create user")
 	}
@@ -125,7 +119,7 @@ func addEntry(db *sql.DB, username string, content string) error {
 	return nil
 }
 
-func addCredentials(db *sql.DB, username string, hash string) error {
+func addCredentialData(db *sql.DB, username string, hash string) error {
 	var exists bool
 	row := db.QueryRow("SELECT EXISTS(SELECT 1 FROM credentials WHERE username = ?)", username)
 	err := row.Scan(&exists)
@@ -146,7 +140,7 @@ func addCredentials(db *sql.DB, username string, hash string) error {
 	return errors.New("failed to access data")
 }
 
-func getPasswordHash(db *sql.DB, username string) (string, error) {
+func getPasswordHashData(db *sql.DB, username string) (string, error) {
 	row := db.QueryRow("SELECT username, hash FROM credentials WHERE username = ?", username)
 
 	var sqlUsername string
@@ -163,7 +157,7 @@ func getPasswordHash(db *sql.DB, username string) (string, error) {
 	return hash, nil
 }
 
-func newSession(db *sql.DB, username string) (Session, error) {
+func newSessionData(db *sql.DB, username string) (Session, error) {
 	session := Session{
 		Username:    username,
 		SessionUnix: time.Now(),
@@ -183,4 +177,22 @@ func newSession(db *sql.DB, username string) (Session, error) {
 	}
 
 	return session, nil
+}
+
+func checkSessionData(db *sql.DB, username string, sessionKey string) error {
+	row := db.QueryRow("SELECT username, sessionKey, sessionUnix FROM sessions WHERE sessionKey = ?", sessionKey)
+
+	var sqlUsername string
+	var sqlSessionKey string
+	var sqlSessionUnix time.Time
+
+	if err := row.Scan(&sqlUsername, &sqlSessionKey, &sqlSessionUnix); err != nil {
+		return errors.New("failed session")
+	}
+
+	if sqlUsername != username || sqlSessionKey != sessionKey || sqlSessionUnix.Before(time.Now()) {
+		return errors.New("failed session")
+	}
+
+	return nil
 }
