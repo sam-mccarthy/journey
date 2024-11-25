@@ -9,27 +9,28 @@ import (
 	_ "github.com/ncruces/go-sqlite3/embed"
 )
 
-func main() {
-	// Open a SQLite database. For now, we'll keep it in memory
-	db, err := sql.Open("sqlite3", ":memory:")
+func closeDatabase(db *sql.DB) {
+	err := db.Close()
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func setupDatabase(dataSource string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", dataSource)
+	if err != nil {
+		return nil, err
 	}
 
 	err = initializeDatabase(db)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	defer func(db *sql.DB) {
-		err = db.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(db)
+	return db, nil
+}
 
-	// We need to be able to register, login, view the user, and view the user's journals.
-	// Later, we'll also need a POST request available for creating journal posts, among potential others.
+func route(db *sql.DB) {
 	router := gin.Default()
 	router.POST("/api/register", func(ctx *gin.Context) { registerUser(ctx, db) })
 	router.POST("/api/login", func(ctx *gin.Context) { loginUser(ctx, db) })
@@ -41,4 +42,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	// Open a SQLite database. For now, we'll keep it in memory
+	db, err := setupDatabase(":memory:")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer closeDatabase(db)
+
+	route(db)
 }
