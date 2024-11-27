@@ -19,6 +19,8 @@ func SignalRoute(db *sql.DB, channel chan struct{}) {
 	router.POST("/api/user", func(ctx *gin.Context) { getUser(ctx, db) })
 	router.POST("/api/journals", func(ctx *gin.Context) { getJournals(ctx, db) })
 
+	router.POST("/api/new_entry", func(ctx *gin.Context) { createEntry(ctx, db) })
+
 	go func() {
 		err := router.Run()
 

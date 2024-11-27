@@ -18,6 +18,7 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 	// Attempt to bind the posted JSON into a user struct.
 	// TODO: Sanitize.
 	var user Credentials
+
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad request data"})
 		return
@@ -44,6 +45,11 @@ func registerUser(ctx *gin.Context, db *sql.DB) {
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	err = addUserData(db, user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
 	// Send the confirmation back to the sender.
@@ -137,6 +143,33 @@ func getJournals(ctx *gin.Context, db *sql.DB) {
 	}
 
 	ctx.JSON(http.StatusOK, entries)
+}
+
+func createEntry(ctx *gin.Context, db *sql.DB) {
+	data := struct {
+		Username string `json:"username"`
+		Content  string `json:"content"`
+		Session  string `json:"session"`
+	}{}
+
+	if err := ctx.ShouldBindJSON(&data); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad request data"})
+		return
+	}
+
+	if err := checkSessionData(db, data.Username, data.Session); err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := addEntryData(db, data.Username, data.Content)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// TODO: Add statuses to every request, or get rid of this
+	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
 func checkUsername(username string) bool {
