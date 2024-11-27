@@ -1,4 +1,4 @@
-package main
+package backend
 
 import (
 	"crypto/rand"
@@ -27,6 +27,27 @@ type Session struct {
 	Username    string    `json:"username"`
 	SessionKey  string    `json:"sessionKey"`
 	SessionUnix time.Time `json:"sessionUnix"`
+}
+
+func CloseDatabase(db *sql.DB) {
+	err := db.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func SetupDatabase(dataSource string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", dataSource)
+	if err != nil {
+		return nil, err
+	}
+
+	err = initializeDatabase(db)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
 
 func initializeDatabase(db *sql.DB) error {
