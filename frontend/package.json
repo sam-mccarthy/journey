@@ -4,15 +4,24 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev": "node server",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build --outDir dist/client",
+    "build:server": "vite build --ssr src/entry-server.tsx --outDir dist/server",
+    "preview": "node server"
   },
   "devDependencies": {
-    "typescript": "~5.6.2",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.10",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
     "vite": "^6.0.5"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }
