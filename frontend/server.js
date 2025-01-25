@@ -35,3 +35,7 @@ app.use('*', async (request, response) => {
         response.status(500).end(err.stack);
     }
 });
+
+app.listen(8080, () => {
+    console.log(`Server started at http://localhost:8080`);
+});
