@@ -1,8 +1,5 @@
 # Journey
 ## What is it?
-Journey is intended to be a daily journaling app built to be open-source, primarily for self-hosting.
+Journey is a daily journaling app built to be open-source, primarily for self-hosting.
 
-## TO-DO
-- Improve testing
-- Comment code
-- Begin building React frontend
+Back-end is in a working state, and front-end is in development.
